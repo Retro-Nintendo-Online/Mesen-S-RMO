@@ -173,7 +173,6 @@
             this.mnuAbout = new System.Windows.Forms.ToolStripMenuItem();
             this.pnlRenderer = new System.Windows.Forms.Panel();
             this.ctrlRenderer = new Mesen.GUI.Controls.ctrlRenderer();
-            this.ctrlRecentGames = new Mesen.GUI.Controls.ctrlRecentGames();
             this.mnuMain.SuspendLayout();
             this.pnlRenderer.SuspendLayout();
             this.SuspendLayout();
@@ -1217,7 +1216,7 @@
             this.rMODiscordToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("rMODiscordToolStripMenuItem.Image")));
             this.rMODiscordToolStripMenuItem.Name = "rMODiscordToolStripMenuItem";
             this.rMODiscordToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.rMODiscordToolStripMenuItem.Text = "RMO Discord";
+            this.rMODiscordToolStripMenuItem.Text = "RNO Discord";
             this.rMODiscordToolStripMenuItem.Click += new System.EventHandler(this.rMODiscordToolStripMenuItem_Click);
             // 
             // onlineHelpToolStripMenuItem
@@ -1279,23 +1278,12 @@
             this.ctrlRenderer.Size = new System.Drawing.Size(512, 478);
             this.ctrlRenderer.TabIndex = 0;
             // 
-            // ctrlRecentGames
-            // 
-            this.ctrlRecentGames.BackColor = System.Drawing.Color.Transparent;
-            this.ctrlRecentGames.Dock = System.Windows.Forms.DockStyle.Top;
-            this.ctrlRecentGames.Location = new System.Drawing.Point(0, 24);
-            this.ctrlRecentGames.Name = "ctrlRecentGames";
-            this.ctrlRecentGames.Size = new System.Drawing.Size(512, 265);
-            this.ctrlRecentGames.TabIndex = 1;
-            this.ctrlRecentGames.Visible = false;
-            // 
             // frmMain
             // 
             this.AllowDrop = true;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(512, 502);
-            this.Controls.Add(this.ctrlRecentGames);
             this.Controls.Add(this.pnlRenderer);
             this.Controls.Add(this.mnuMain);
             this.MainMenuStrip = this.mnuMain;
@@ -1303,7 +1291,6 @@
             this.Text = "frmMain";
             this.Controls.SetChildIndex(this.mnuMain, 0);
             this.Controls.SetChildIndex(this.pnlRenderer, 0);
-            this.Controls.SetChildIndex(this.ctrlRecentGames, 0);
             this.mnuMain.ResumeLayout(false);
             this.mnuMain.PerformLayout();
             this.pnlRenderer.ResumeLayout(false);
@@ -1412,7 +1399,6 @@
 		private System.Windows.Forms.ToolStripSeparator toolStripMenuItem1;
 		private System.Windows.Forms.ToolStripMenuItem mnuRegionNtsc;
 		private System.Windows.Forms.ToolStripMenuItem mnuRegionPal;
-		private Controls.ctrlRecentGames ctrlRecentGames;
 		private System.Windows.Forms.ToolStripMenuItem mnuVideoRecorder;
 		private System.Windows.Forms.ToolStripMenuItem mnuAviRecord;
 		private System.Windows.Forms.ToolStripMenuItem mnuAviStop;

@@ -78,7 +78,6 @@ namespace Mesen.GUI.Forms
 			ConfigManager.Config.InitializeDefaults();
 			ConfigManager.Config.ApplyConfig();
 
-			_displayManager = new DisplayManager(this, ctrlRenderer, pnlRenderer, mnuMain, ctrlRecentGames);
 			_displayManager.SetScaleBasedOnWindowSize();
 			_shortcuts = new ShortcutHandler(_displayManager);
 
@@ -96,11 +95,6 @@ namespace Mesen.GUI.Forms
 				this.BeginInvoke((Action)(() => {
 
 					ResizeRecentGames();
-					ctrlRecentGames.Initialize();
-
-					if(!EmuRunner.IsRunning()) {
-						ctrlRecentGames.Visible = true;
-					}
 				}));
 			});
 
@@ -162,7 +156,6 @@ namespace Mesen.GUI.Forms
 
 					this.BeginInvoke((Action)(() => {
 						UpdateDebuggerMenu();
-						ctrlRecentGames.Visible = false;
 						SaveStateManager.UpdateStateMenu(mnuLoadState, false);
 						SaveStateManager.UpdateStateMenu(mnuSaveState, true);
 
@@ -185,8 +178,6 @@ namespace Mesen.GUI.Forms
 					this.BeginInvoke((Action)(() => {
 						this.Text = "Mesen-S";
 						UpdateDebuggerMenu();
-						ctrlRecentGames.Initialize();
-						ctrlRecentGames.Visible = true;
 						ResizeRecentGames();
 						if(_displayManager.ExclusiveFullscreen) {
 							_displayManager.SetFullscreenState(false);
@@ -433,7 +424,6 @@ namespace Mesen.GUI.Forms
 		
 		private void ResizeRecentGames()
 		{
-			ctrlRecentGames.Height = this.ClientSize.Height - ctrlRecentGames.Top - 25;
 		}
 
 		private void frmMain_Resize(object sender, EventArgs e)
@@ -478,7 +468,6 @@ namespace Mesen.GUI.Forms
 			using(frmPreferences frm = new frmPreferences()) {
 				frm.ShowDialog(sender, this);
 				ConfigManager.Config.Preferences.ApplyConfig();
-				ctrlRecentGames.Visible = !EmuRunner.IsRunning();
 				if(frm.NeedRestart) {
 					this.Close();
 				}
