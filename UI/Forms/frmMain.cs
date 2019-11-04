@@ -22,8 +22,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-//Version Line 179 
-
 namespace Mesen.GUI.Forms
 {
 	public partial class frmMain : BaseInputForm
@@ -80,6 +78,8 @@ namespace Mesen.GUI.Forms
 			ConfigManager.Config.InitializeDefaults();
 			ConfigManager.Config.ApplyConfig();
 
+			_displayManager = new DisplayManager(this, ctrlRenderer, pnlRenderer, mnuMain, ctrlRecentGames);
+			_displayManager.SetScaleBasedOnWindowSize();
 			_shortcuts = new ShortcutHandler(_displayManager);
 
 			_notifListener = new NotificationListener();
@@ -94,6 +94,13 @@ namespace Mesen.GUI.Forms
 			Task.Run(() => {
 				Thread.Sleep(25);
 				this.BeginInvoke((Action)(() => {
+
+					ResizeRecentGames();
+					ctrlRecentGames.Initialize();
+
+					if(!EmuRunner.IsRunning()) {
+						ctrlRecentGames.Visible = true;
+					}
 				}));
 			});
 
@@ -106,6 +113,7 @@ namespace Mesen.GUI.Forms
 			}
 
 			InBackgroundHelper.StartBackgroundTimer();
+			this.Resize += frmMain_Resize;
 		}
 
 		private bool _shuttingDown = false;
@@ -154,6 +162,7 @@ namespace Mesen.GUI.Forms
 
 					this.BeginInvoke((Action)(() => {
 						UpdateDebuggerMenu();
+						ctrlRecentGames.Visible = false;
 						SaveStateManager.UpdateStateMenu(mnuLoadState, false);
 						SaveStateManager.UpdateStateMenu(mnuSaveState, true);
 
@@ -176,6 +185,9 @@ namespace Mesen.GUI.Forms
 					this.BeginInvoke((Action)(() => {
 						this.Text = "Mesen-S";
 						UpdateDebuggerMenu();
+						ctrlRecentGames.Initialize();
+						ctrlRecentGames.Visible = true;
+						ResizeRecentGames();
 						if(_displayManager.ExclusiveFullscreen) {
 							_displayManager.SetFullscreenState(false);
 						}
@@ -259,6 +271,19 @@ namespace Mesen.GUI.Forms
 			_shortcuts.BindShortcut(mnuTakeScreenshot, EmulatorShortcut.TakeScreenshot, running);
 			_shortcuts.BindShortcut(mnuRandomGame, EmulatorShortcut.LoadRandomGame);
 			
+			mnuDebugger.InitShortcut(this, nameof(DebuggerShortcutsConfig.OpenDebugger));
+			mnuSpcDebugger.InitShortcut(this, nameof(DebuggerShortcutsConfig.OpenSpcDebugger));
+			mnuSa1Debugger.InitShortcut(this, nameof(DebuggerShortcutsConfig.OpenSa1Debugger));
+			mnuGsuDebugger.InitShortcut(this, nameof(DebuggerShortcutsConfig.OpenGsuDebugger));
+			mnuMemoryTools.InitShortcut(this, nameof(DebuggerShortcutsConfig.OpenMemoryTools));
+			mnuEventViewer.InitShortcut(this, nameof(DebuggerShortcutsConfig.OpenEventViewer));
+			mnuTilemapViewer.InitShortcut(this, nameof(DebuggerShortcutsConfig.OpenTilemapViewer));
+			mnuTileViewer.InitShortcut(this, nameof(DebuggerShortcutsConfig.OpenTileViewer));
+			mnuSpriteViewer.InitShortcut(this, nameof(DebuggerShortcutsConfig.OpenSpriteViewer));
+			mnuPaletteViewer.InitShortcut(this, nameof(DebuggerShortcutsConfig.OpenPaletteViewer));
+			mnuTraceLogger.InitShortcut(this, nameof(DebuggerShortcutsConfig.OpenTraceLogger));
+			mnuScriptWindow.InitShortcut(this, nameof(DebuggerShortcutsConfig.OpenScriptWindow));
+			mnuRegisterViewer.InitShortcut(this, nameof(DebuggerShortcutsConfig.OpenRegisterViewer));
 
 			mnuNoneFilter.Click += (s, e) => { _shortcuts.SetVideoFilter(VideoFilterType.None); };
 			mnuNtscFilter.Click += (s, e) => { _shortcuts.SetVideoFilter(VideoFilterType.NTSC); };
@@ -303,8 +328,23 @@ namespace Mesen.GUI.Forms
 				mnuInputConfig.Enabled = !isConnected;
 				mnuEmulationConfig.Enabled = !isConnected;
 			};
+			
+			InitNetPlayMenus();
 
-		 InitNetPlayMenus();
+			mnuDebugger.Click += (s, e) => { DebugWindowManager.OpenDebugWindow(DebugWindow.Debugger); };
+			mnuSpcDebugger.Click += (s, e) => { DebugWindowManager.OpenDebugWindow(DebugWindow.SpcDebugger); };
+			mnuSa1Debugger.Click += (s, e) => { DebugWindowManager.OpenDebugWindow(DebugWindow.Sa1Debugger); };
+			mnuGsuDebugger.Click += (s, e) => { DebugWindowManager.OpenDebugWindow(DebugWindow.GsuDebugger); };
+			mnuTraceLogger.Click += (s, e) => { DebugWindowManager.OpenDebugWindow(DebugWindow.TraceLogger); };
+			mnuMemoryTools.Click += (s, e) => { DebugWindowManager.OpenDebugWindow(DebugWindow.MemoryTools); };
+			mnuTilemapViewer.Click += (s, e) => { DebugWindowManager.OpenDebugWindow(DebugWindow.TilemapViewer); };
+			mnuTileViewer.Click += (s, e) => { DebugWindowManager.OpenDebugWindow(DebugWindow.TileViewer); };
+			mnuSpriteViewer.Click += (s, e) => { DebugWindowManager.OpenDebugWindow(DebugWindow.SpriteViewer); };
+			mnuPaletteViewer.Click += (s, e) => { DebugWindowManager.OpenDebugWindow(DebugWindow.PaletteViewer); };
+			mnuEventViewer.Click += (s, e) => { DebugWindowManager.OpenDebugWindow(DebugWindow.EventViewer); };
+			mnuScriptWindow.Click += (s, e) => { DebugWindowManager.OpenDebugWindow(DebugWindow.ScriptWindow); };
+			mnuRegisterViewer.Click += (s, e) => { DebugWindowManager.OpenDebugWindow(DebugWindow.RegisterViewer); };
+
 			mnuTestRun.Click += (s, e) => { RomTestHelper.RunTest(); };
 			mnuTestRecord.Click += (s, e) => { RomTestHelper.RecordTest(); };
 			mnuTestStop.Click += (s, e) => { RomTestHelper.StopRecording(); };
@@ -370,8 +410,35 @@ namespace Mesen.GUI.Forms
 		private void UpdateDebuggerMenu()
 		{
 			bool running = EmuRunner.IsRunning();
+			mnuDebugger.Enabled = running;
+			mnuSpcDebugger.Enabled = running;
 
 			CoprocessorType coprocessor = EmuApi.GetRomInfo().CoprocessorType;
+			mnuSa1Debugger.Enabled = coprocessor == CoprocessorType.SA1;
+			mnuSa1Debugger.Visible = coprocessor == CoprocessorType.SA1;
+
+			mnuGsuDebugger.Enabled = coprocessor == CoprocessorType.GSU;
+			mnuGsuDebugger.Visible = coprocessor == CoprocessorType.GSU;
+
+			mnuTraceLogger.Enabled = running;
+			mnuScriptWindow.Enabled = running;
+			mnuMemoryTools.Enabled = running;
+			mnuTilemapViewer.Enabled = running;
+			mnuTileViewer.Enabled = running;
+			mnuSpriteViewer.Enabled = running;
+			mnuPaletteViewer.Enabled = running;
+			mnuEventViewer.Enabled = running;
+			mnuRegisterViewer.Enabled = running;
+		}
+		
+		private void ResizeRecentGames()
+		{
+			ctrlRecentGames.Height = this.ClientSize.Height - ctrlRecentGames.Top - 25;
+		}
+
+		private void frmMain_Resize(object sender, EventArgs e)
+		{
+			ResizeRecentGames();
 		}
 		
 		private void mnuVideoConfig_Click(object sender, EventArgs e)
@@ -411,6 +478,7 @@ namespace Mesen.GUI.Forms
 			using(frmPreferences frm = new frmPreferences()) {
 				frm.ShowDialog(sender, this);
 				ConfigManager.Config.Preferences.ApplyConfig();
+				ctrlRecentGames.Visible = !EmuRunner.IsRunning();
 				if(frm.NeedRestart) {
 					this.Close();
 				}
@@ -456,11 +524,12 @@ namespace Mesen.GUI.Forms
 
 		private void mnuCheckForUpdates_Click(object sender, EventArgs e)
 		{
+			UpdateHelper.CheckForUpdates(false);
 		}
 
 		private void mnuReportBug_Click(object sender, EventArgs e)
 		{
-			Process.Start("https://github.com/Retro-Nintendo-Online/Mesen-S-RMO/issues");
+			Process.Start("https://www.mesen.ca/snes/ReportBug.php");
 		}
 
 		private void mnuAbout_Click(object sender, EventArgs e)
@@ -637,10 +706,5 @@ namespace Mesen.GUI.Forms
 				Interlocked.Decrement(ref _inMenu);
 			});
 		}
-
-	  private void netplayDiscordToolStripMenuItem_Click(object sender, EventArgs e)
-	  {
-		 Process.Start("https://discord.gg/DZHusb2");
-	  }
-   }
+	}
 }
