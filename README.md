@@ -3,46 +3,24 @@
 Mesen-S is a cross-platform SNES emulator for Windows & Linux built in C++ and C#.  
 If you want to support this project, please consider making a donation:
 
-[![Donate](https://www.mesen.ca/images/donate.png)](https://www.mesen.ca/Donate.php)
+## Info
+This emulator bundled a modified version of Mesen-S
 
-## Development Builds
+## Installation
+<sub>(note: ROMs will need to be downloaded separately)</sub>
 
-Development builds of the latest commit are available from Appveyor. For release builds, see the **Releases** tab on GitHub.
+### Windows
 
-**Warning:** These are development builds and may be ***unstable***. Using them may also increase the chances of your settings being corrupted, or having issues when upgrading to the next official release. Additionally, these builds are currently not optimized via PGO and will typically run 20-30% slower than the official release builds.
+An executable file for the most recent version of Mesen S RNO can be downloaded [here](https://www.nintendonetplay.ml/mesen-s-download.html).
 
-Windows: [![Build status](https://ci.appveyor.com/api/projects/status/cjk97u1yvwnae83x/branch/master?svg=true)](https://ci.appveyor.com/project/Sour/mesen-s/build/artifacts)
+Alternatively you can build the project from source using the Mesen.sln file. We use Visual Studio 2017
+To build it using Visual Studio 2017 we use a x64 (64bit) build with it being `Release -> x64 -> UI`
 
-Linux: [![Build status](https://ci.appveyor.com/api/projects/status/arkaatgy94f23ll3/branch/master?svg=true)](https://ci.appveyor.com/project/Sour/mesen-s-hayo4/build/artifacts)
+### Linux
 
-## Roadmap
+An executable file for the most reason version of Mesen RNO **can soon** be downloaded [here](https://www.nintendonetplay.ml/mesen-download.html).
 
-The following should be added over time (in no particular order):
+Alternatively you can build from source. Instructions posted later.
 
-* Additions/improvements in the debugging tools
-* SPC7110 support
-* MSU-1 support
-* Satellaview/BS-X support
-
-## Compiling
-
-See [COMPILING.md](COMPILING.md)
-
-## License
-
-Mesen is available under the GPL V3 license.  Full text here: <http://www.gnu.org/licenses/gpl-3.0.en.html>
-
-Copyright (C) 2019 M. Bibaud
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+### License
+Mesen S RNO is licensed under the [GNU General Public License v3.0](LICENSE)
