@@ -529,7 +529,7 @@ namespace Mesen.GUI.Forms
 
 		private void mnuReportBug_Click(object sender, EventArgs e)
 		{
-			Process.Start("https://www.mesen.ca/snes/ReportBug.php");
+			Process.Start("https://github.com/Retro-Nintendo-Online/Mesen-S-RMO/issues");
 		}
 
 		private void mnuAbout_Click(object sender, EventArgs e)
