@@ -706,5 +706,15 @@ namespace Mesen.GUI.Forms
 				Interlocked.Decrement(ref _inMenu);
 			});
 		}
-	}
+
+	  private void onlineHelpToolStripMenuItem_Click(object sender, EventArgs e)
+	  {
+		 Process.Start("https://nintendonetplay.ml/mesen-s-guide.html");
+	  }
+
+	  private void rMODiscordToolStripMenuItem_Click(object sender, EventArgs e)
+	  {
+		 Process.Start("http://discord.gg/DZHusb2");
+	  }
+   }
 }
