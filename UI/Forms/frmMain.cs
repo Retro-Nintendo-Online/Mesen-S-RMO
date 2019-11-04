@@ -78,7 +78,6 @@ namespace Mesen.GUI.Forms
 			ConfigManager.Config.InitializeDefaults();
 			ConfigManager.Config.ApplyConfig();
 
-			_displayManager.SetScaleBasedOnWindowSize();
 			_shortcuts = new ShortcutHandler(_displayManager);
 
 			_notifListener = new NotificationListener();

@@ -21,7 +21,6 @@ namespace Mesen.GUI.Forms.NetPlay
 			Entity = ConfigManager.Config.Netplay;
 
 			AddBinding(nameof(NetplayConfig.Host), txtHost);
-			AddBinding(nameof(NetplayConfig.Password), txtPassword);
 			this.txtPort.Text = ConfigManager.Config.Netplay.Port.ToString();
 		}
 

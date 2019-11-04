@@ -20,7 +20,6 @@ namespace Mesen.GUI.Forms.NetPlay
 			Entity = ConfigManager.Config.Netplay;
 
 			AddBinding(nameof(NetplayConfig.ServerName), txtServerName);
-			AddBinding(nameof(NetplayConfig.ServerPassword), txtPassword);
 			AddBinding(nameof(NetplayConfig.ServerPort), txtPort, eNumberFormat.Decimal);
 		}
 

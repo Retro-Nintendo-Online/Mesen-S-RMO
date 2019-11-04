@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Resources>
 	<Forms>
-		<Form ID="frmMain" Title="Mesen-S">
+		<Form ID="frmMain" Title="Mesen-S-RNO (November 4, 2019">
 			<Control ID="mnuFile">File</Control>
 			<Control ID="mnuOpen">Open</Control>
 			<Control ID="mnuSaveState">Save State</Control>
@@ -403,13 +403,13 @@
 		</Form>
 		<Form ID="frmServerConfig" Title="Server Configuration">
 			<Control ID="lblPort">Port:</Control>
-			<Control ID="lblServerName">Server name:</Control>
+			<Control ID="lblServerName">IP:</Control>
 			<Control ID="lblPassword">Password:</Control>
 			<Control ID="btnOK">OK</Control>
 			<Control ID="btnCancel">Cancel</Control>
 		</Form>
 		<Form ID="frmClientConfig" Title="Connect...">
-			<Control ID="lblHost">Host:</Control>
+			<Control ID="lblHost">Host IP:</Control>
 			<Control ID="lblPort">Port:</Control>
 			<Control ID="lblPassword">Password:</Control>
 			<Control ID="btnOK">OK</Control>
