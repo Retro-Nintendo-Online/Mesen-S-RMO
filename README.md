@@ -4,7 +4,7 @@ Mesen-S is a cross-platform SNES emulator for Windows & Linux built in C++ and C
 If you want to support this project, please consider making a donation:
 
 ## Info
-Thi emulator bundled a modified version of Mesen-S
+This emulator bundled a modified version of Mesen-S
 
 ## Installation
 <sub>(note: ROMs will need to be downloaded separately)</sub>
