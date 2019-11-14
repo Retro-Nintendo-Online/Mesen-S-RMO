@@ -1,4 +1,4 @@
-# Mesen-S
+# Mesen-S ping
 
 Mesen-S is a cross-platform SNES emulator for Windows & Linux built in C++ and C#.  
 If you want to support this project, please consider making a donation:
