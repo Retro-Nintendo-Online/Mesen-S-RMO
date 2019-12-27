@@ -13,6 +13,7 @@ class InternalRegisters final : public ISerializable
 {
 private:
 	Console* _console;
+	Cpu* _cpu;
 	Ppu* _ppu;
 	MemoryManager* _memoryManager;
 
@@ -22,6 +23,9 @@ private:
 	bool _nmiFlag = false;
 	bool _irqLevel = false;
 	bool _needIrq = false;
+	bool _irqFlag = false;
+	
+	void SetIrqFlag(bool irqFlag);
 
 public:
 	InternalRegisters();
@@ -57,7 +61,7 @@ void InternalRegisters::ProcessIrqCounters()
 {
 	if(_needIrq) {
 		_needIrq = false;
-		_console->GetCpu()->SetIrqSource(IrqSource::Ppu);
+		SetIrqFlag(true);
 	}
 
 	bool irqLevel = (

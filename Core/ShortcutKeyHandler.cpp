@@ -129,6 +129,12 @@ void ShortcutKeyHandler::CheckMappedKeys()
 		}
 	}
 
+	for(int i = 0; i < 10; i++) {
+		if(DetectKeyPress((EmulatorShortcut)((int)EmulatorShortcut::SelectSaveSlot1 + i))) {
+			_console->GetSaveStateManager()->SelectSaveSlot(i + 1);
+		}
+	}
+
 	if(DetectKeyPress(EmulatorShortcut::MoveToNextStateSlot)) {
 		_console->GetSaveStateManager()->MoveToNextSlot();
 	}
@@ -147,10 +153,6 @@ void ShortcutKeyHandler::CheckMappedKeys()
 
 	if(DetectKeyPress(EmulatorShortcut::ToggleCheats) && !isNetplayClient && !isMovieActive) {
 		_console->GetNotificationManager()->SendNotification(ConsoleNotificationType::ExecuteShortcut, (void*)EmulatorShortcut::ToggleCheats);
-	}
-
-	if(DetectKeyPress(EmulatorShortcut::ToggleAudio)) {
-		_console->GetNotificationManager()->SendNotification(ConsoleNotificationType::ExecuteShortcut, (void*)EmulatorShortcut::ToggleAudio);
 	}
 
 	if(DetectKeyPress(EmulatorShortcut::RunSingleFrame)) {

@@ -15,9 +15,11 @@ namespace Mesen.GUI.Config
 		[MinMax(0, 5000)] public UInt32 RewindSpeed = 100;
 
 		public ConsoleRegion Region = ConsoleRegion.Auto;
+		
+		[MinMax(0, 10)] public UInt32 RunAheadFrames = 0;
 
-		[MarshalAs(UnmanagedType.I1)] public bool AllowInvalidInput = false;
-		[MarshalAs(UnmanagedType.I1)] public bool EnableMapperRandomPowerOnState = false;
+		[MarshalAs(UnmanagedType.I1)] public bool EnableRandomPowerOnState = false;
+		[MarshalAs(UnmanagedType.I1)] public bool EnableStrictBoardMappings = false;
 
 		[MinMax(0, 1000)] public UInt32 PpuExtraScanlinesBeforeNmi = 0;
 		[MinMax(0, 1000)] public UInt32 PpuExtraScanlinesAfterNmi = 0;

@@ -273,8 +273,10 @@ struct EmulationConfig
 
 	ConsoleRegion Region = ConsoleRegion::Auto;
 
-	bool AllowInvalidInput = false;
+	uint32_t RunAheadFrames = 0;
+
 	bool EnableRandomPowerOnState = false;
+	bool EnableStrictBoardMappings = false;
 
 	uint32_t PpuExtraScanlinesBeforeNmi = 0;
 	uint32_t PpuExtraScanlinesAfterNmi = 0;
@@ -329,12 +331,22 @@ enum class EmulatorShortcut
 	RewindTenSecs,
 	RewindOneMin,
 
+	SelectSaveSlot1,
+	SelectSaveSlot2,
+	SelectSaveSlot3,
+	SelectSaveSlot4,
+	SelectSaveSlot5,
+	SelectSaveSlot6,
+	SelectSaveSlot7,
+	SelectSaveSlot8,
+	SelectSaveSlot9,
+	SelectSaveSlot10,
 	MoveToNextStateSlot,
 	MoveToPreviousStateSlot,
 	SaveState,
 	LoadState,
 
-	ToggleAudio,
+	ToggleCheats,
 	ToggleFastForward,
 	ToggleRewind,
 
@@ -366,7 +378,7 @@ enum class EmulatorShortcut
 	ToggleOsd,
 	ToggleAlwaysOnTop,
 	ToggleDebugInfo,
-	ToggleCheats,
+	ToggleAudio,
 
 	ToggleBgLayer0,
 	ToggleBgLayer1,

@@ -13,12 +13,22 @@ namespace Mesen.GUI.Config.Shortcuts
 		RewindTenSecs,
 		RewindOneMin,
 
+		SelectSaveSlot1,
+		SelectSaveSlot2,
+		SelectSaveSlot3,
+		SelectSaveSlot4,
+		SelectSaveSlot5,
+		SelectSaveSlot6,
+		SelectSaveSlot7,
+		SelectSaveSlot8,
+		SelectSaveSlot9,
+		SelectSaveSlot10,
 		MoveToNextStateSlot,
 		MoveToPreviousStateSlot,
 		SaveState,
 		LoadState,
 
-		ToggleAudio,
+		ToggleCheats,
 		ToggleFastForward,
 		ToggleRewind,
 
@@ -50,7 +60,7 @@ namespace Mesen.GUI.Config.Shortcuts
 		ToggleOsd,
 		ToggleAlwaysOnTop,
 		ToggleDebugInfo,
-		ToggleCheats,
+		ToggleAudio,
 
 		ToggleBgLayer0,
 		ToggleBgLayer1,

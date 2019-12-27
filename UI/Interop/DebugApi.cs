@@ -91,14 +91,14 @@ namespace Mesen.GUI
 
 		[DllImport(DllPath)] public static extern void SetViewerUpdateTiming(Int32 viewerId, Int32 scanline, Int32 cycle);
 
-		[DllImport(DllPath)] private static extern UInt32 GetDebugEventCount([MarshalAs(UnmanagedType.I1)]bool getPreviousFrameData);
-		[DllImport(DllPath, EntryPoint = "GetDebugEvents")] private static extern void GetDebugEventsWrapper([In, Out]DebugEventInfo[] eventArray, ref UInt32 maxEventCount, [MarshalAs(UnmanagedType.I1)]bool getPreviousFrameData);
-		public static DebugEventInfo[] GetDebugEvents(bool getPreviousFrameData)
+		[DllImport(DllPath)] private static extern UInt32 GetDebugEventCount(EventViewerDisplayOptions options);
+		[DllImport(DllPath, EntryPoint = "GetDebugEvents")] private static extern void GetDebugEventsWrapper([In, Out]DebugEventInfo[] eventArray, ref UInt32 maxEventCount);
+		public static DebugEventInfo[] GetDebugEvents(EventViewerDisplayOptions options)
 		{
-			UInt32 maxEventCount = GetDebugEventCount(getPreviousFrameData);
+			UInt32 maxEventCount = GetDebugEventCount(options);
 			DebugEventInfo[] debugEvents = new DebugEventInfo[maxEventCount];
 
-			DebugApi.GetDebugEventsWrapper(debugEvents, ref maxEventCount, getPreviousFrameData);
+			DebugApi.GetDebugEventsWrapper(debugEvents, ref maxEventCount);
 			if(maxEventCount < debugEvents.Length) {
 				//Remove the excess from the array if needed
 				Array.Resize(ref debugEvents, (int)maxEventCount);
@@ -189,6 +189,19 @@ namespace Mesen.GUI
 				case SnesMemoryType.SpcRam:
 				case SnesMemoryType.SpcRom:
 					return CpuType.Spc;
+
+				case SnesMemoryType.GsuMemory:
+				case SnesMemoryType.GsuWorkRam:
+					return CpuType.Gsu;
+
+				case SnesMemoryType.Sa1InternalRam:
+				case SnesMemoryType.Sa1Memory:
+					return CpuType.Sa1;
+
+				case SnesMemoryType.DspDataRam:
+				case SnesMemoryType.DspDataRom:
+				case SnesMemoryType.DspProgramRom:
+					return CpuType.NecDsp;
 
 				default:
 					return CpuType.Cpu;
@@ -302,7 +315,7 @@ namespace Mesen.GUI
 		public UInt32 ProgramCounter;
 		public UInt16 Scanline;
 		public UInt16 Cycle;
-		public UInt16 BreakpointId;
+		public Int16 BreakpointId;
 		public byte DmaChannel;
 		public DmaChannelConfig DmaChannelInfo;
 	};
@@ -312,8 +325,17 @@ namespace Mesen.GUI
 		public UInt32 IrqColor;
 		public UInt32 NmiColor;
 		public UInt32 BreakpointColor;
+
 		public UInt32 PpuRegisterReadColor;
-		public UInt32 PpuRegisterWriteColor;
+		public UInt32 PpuRegisterWriteCgramColor;
+		public UInt32 PpuRegisterWriteVramColor;
+		public UInt32 PpuRegisterWriteOamColor;
+		public UInt32 PpuRegisterWriteMode7Color;
+		public UInt32 PpuRegisterWriteBgOptionColor;
+		public UInt32 PpuRegisterWriteBgScrollColor;
+		public UInt32 PpuRegisterWriteWindowColor;
+		public UInt32 PpuRegisterWriteOtherColor;
+
 		public UInt32 ApuRegisterReadColor;
 		public UInt32 ApuRegisterWriteColor;
 		public UInt32 CpuRegisterReadColor;
@@ -321,8 +343,16 @@ namespace Mesen.GUI
 		public UInt32 WorkRamRegisterReadColor;
 		public UInt32 WorkRamRegisterWriteColor;
 
-		[MarshalAs(UnmanagedType.I1)] public bool ShowPpuRegisterWrites;
+		[MarshalAs(UnmanagedType.I1)] public bool ShowPpuRegisterCgramWrites;
+		[MarshalAs(UnmanagedType.I1)] public bool ShowPpuRegisterVramWrites;
+		[MarshalAs(UnmanagedType.I1)] public bool ShowPpuRegisterOamWrites;
+		[MarshalAs(UnmanagedType.I1)] public bool ShowPpuRegisterMode7Writes;
+		[MarshalAs(UnmanagedType.I1)] public bool ShowPpuRegisterBgOptionWrites;
+		[MarshalAs(UnmanagedType.I1)] public bool ShowPpuRegisterBgScrollWrites;
+		[MarshalAs(UnmanagedType.I1)] public bool ShowPpuRegisterWindowWrites;
+		[MarshalAs(UnmanagedType.I1)] public bool ShowPpuRegisterOtherWrites;
 		[MarshalAs(UnmanagedType.I1)] public bool ShowPpuRegisterReads;
+
 		[MarshalAs(UnmanagedType.I1)] public bool ShowCpuRegisterWrites;
 		[MarshalAs(UnmanagedType.I1)] public bool ShowCpuRegisterReads;
 
@@ -352,6 +382,7 @@ namespace Mesen.GUI
 		public TileLayout Layout;
 		public Int32 Width;
 		public Int32 Palette;
+		public Int32 PageSize;
 	}
 
 	public struct GetSpritePreviewOptions

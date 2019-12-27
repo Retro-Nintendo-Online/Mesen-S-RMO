@@ -9,6 +9,8 @@
 #include "BaseCartridge.h"
 #include "RamHandler.h"
 #include "Sa1VectorHandler.h"
+#include "Sa1IRamHandler.h"
+#include "Sa1BwRamHandler.h"
 #include "CpuBwRamHandler.h"
 #include "MessageManager.h"
 #include "../Utilities/HexUtilities.h"
@@ -24,7 +26,8 @@ Sa1::Sa1(Console* console)
 	_snesCpu = _console->GetCpu().get();
 	
 	_iRam = new uint8_t[Sa1::InternalRamSize];
-	_iRamHandler.reset(new RamHandler(_iRam, 0, 0x800, SnesMemoryType::Sa1InternalRam));
+	_iRamHandler.reset(new Sa1IRamHandler(_iRam));
+	_bwRamHandler.reset(new Sa1BwRamHandler(_cart->DebugGetSaveRam(), _cart->DebugGetSaveRamSize(), &_state));
 	console->GetSettings()->InitializeRam(_iRam, 0x800);
 	
 	//Register the SA1 in the CPU's memory space ($22xx-$23xx registers)
@@ -39,6 +42,16 @@ Sa1::Sa1(Console* console)
 	_mappings.RegisterHandler(0x80, 0xBF, 0x3000, 0x3FFF, _iRamHandler.get());
 	_mappings.RegisterHandler(0x00, 0x3F, 0x0000, 0x0FFF, _iRamHandler.get());
 	_mappings.RegisterHandler(0x80, 0xBF, 0x0000, 0x0FFF, _iRamHandler.get());
+
+	for(int i = 0; i <= 0x3F; i++) {
+		//SA-1: 00-3F:6000-7FFF + 80-BF:6000-7FFF
+		_mappings.RegisterHandler(i, i, 0x6000, 0x7FFF, _bwRamHandler.get());
+		_mappings.RegisterHandler(i + 0x80, i + 0x80, 0x6000, 0x7FFF, _bwRamHandler.get());
+	}
+	for(int i = 0; i <= 0x0F; i++) {
+		//SA-1: 60-6F:0000-FFFF
+		_mappings.RegisterHandler(i + 0x60, i + 0x60, 0x0000, 0xFFFF, _bwRamHandler.get());
+	}
 
 	vector<unique_ptr<IMemoryHandler>> &saveRamHandlers = _cart->GetSaveRamHandlers();
 	for(unique_ptr<IMemoryHandler> &handler : saveRamHandlers) {
@@ -119,9 +132,11 @@ void Sa1::Sa1RegisterWrite(uint16_t addr, uint8_t value)
 
 		case 0x2225: 
 			//BMAP (SA-1 BW-RAM Address Mapping)
-			_state.Sa1BwBank = value & 0x7F;
-			_state.Sa1BwMode = (value & 0x80);
-			UpdateSaveRamMappings();
+			if(_state.Sa1BwBank != (value & 0x7F) || _state.Sa1BwMode != (value & 0x80)) {
+				_state.Sa1BwBank = value & 0x7F;
+				_state.Sa1BwMode = (value & 0x80);
+				UpdateSaveRamMappings();
+			}
 			break;
 			
 		case 0x2227: _state.Sa1BwWriteEnabled = (value & 0x80) != 0; break; //CBWE (SA-1 CPU BW-RAM Write Enable)
@@ -397,19 +412,15 @@ uint8_t Sa1::CpuRegisterRead(uint16_t addr)
 
 void Sa1::ProcessInterrupts()
 {
-	if((_state.Sa1IrqRequested && _state.Sa1IrqEnabled) || (_state.DmaIrqFlag && _state.DmaIrqEnabled) || (_state.CharConvIrqFlag && _state.CharConvIrqEnabled)) {
+	if((_state.Sa1IrqRequested && _state.Sa1IrqEnabled) || (_state.DmaIrqFlag && _state.DmaIrqEnabled)) {
 		_cpu->SetIrqSource(IrqSource::Coprocessor);
 	} else {
 		_cpu->ClearIrqSource(IrqSource::Coprocessor);
 	}
 
-	if(_state.Sa1NmiRequested && _state.Sa1NmiEnabled) {
-		_cpu->SetNmiFlag();
-	} else {
-		//...?
-	}
+	_cpu->SetNmiFlag(_state.Sa1NmiRequested && _state.Sa1NmiEnabled);
 
-	if(_state.CpuIrqRequested && _state.CpuIrqEnabled) {
+	if((_state.CpuIrqRequested && _state.CpuIrqEnabled) || (_state.CharConvIrqFlag && _state.CharConvIrqEnabled)) {
 		_snesCpu->SetIrqSource(IrqSource::Coprocessor);
 	} else {
 		_snesCpu->ClearIrqSource(IrqSource::Coprocessor);
@@ -419,8 +430,8 @@ void Sa1::ProcessInterrupts()
 void Sa1::WriteSa1(uint32_t addr, uint8_t value, MemoryOperationType type)
 {
 	IMemoryHandler *handler = _mappings.GetHandler(addr);
+	_console->ProcessMemoryWrite<CpuType::Sa1>(addr, value, type);
 	if(handler) {
-		_console->ProcessMemoryWrite<CpuType::Sa1>(addr, value, type);
 		_lastAccessMemType = handler->GetMemoryType();
 		_openBus = value;
 		handler->Write(addr, value);
@@ -432,16 +443,17 @@ void Sa1::WriteSa1(uint32_t addr, uint8_t value, MemoryOperationType type)
 uint8_t Sa1::ReadSa1(uint32_t addr, MemoryOperationType type)
 {
 	IMemoryHandler *handler = _mappings.GetHandler(addr);
+	uint8_t value;
 	if(handler) {
-		uint8_t value = handler->Read(addr);
+		value = handler->Read(addr);
 		_lastAccessMemType = handler->GetMemoryType();
 		_openBus = value;
-		_console->ProcessMemoryRead<CpuType::Sa1>(addr, value, type);
-		return value;
 	} else {
+		value = _openBus;
 		LogDebug("[Debug] Read SA1 - missing handler: $" + HexUtilities::ToHex(addr));
 	}
-	return _openBus;
+	_console->ProcessMemoryRead<CpuType::Sa1>(addr, value, type);
+	return value;
 }
 
 uint8_t Sa1::Read(uint32_t addr)
@@ -451,14 +463,13 @@ uint8_t Sa1::Read(uint32_t addr)
 
 uint8_t Sa1::Peek(uint32_t addr)
 {
-	return Sa1RegisterRead(addr);
+	//Not implemented
+	return 0;
 }
 
-void Sa1::PeekBlock(uint8_t *output)
+void Sa1::PeekBlock(uint32_t addr, uint8_t *output)
 {
-	for(int i = 0; i < 0x1000; i++) {
-		output[i] = Sa1RegisterRead(i);
-	}
+	memset(output, 0, 0x1000);
 }
 
 void Sa1::Write(uint32_t addr, uint8_t value)
@@ -597,12 +608,13 @@ void Sa1::UpdateSaveRamMappings()
 {
 	vector<unique_ptr<IMemoryHandler>> &saveRamHandlers = _cart->GetSaveRamHandlers();
 	MemoryMappings* cpuMappings = _memoryManager->GetMemoryMappings();
-	for(int i = 0; i < 0x3F; i++) {
-		_mappings.RegisterHandler(i, i, 0x6000, 0x7FFF, saveRamHandlers, 0, _state.Sa1BwBank * 2);
-		_mappings.RegisterHandler(i + 0x80, i + 0x80, 0x6000, 0x7FFF, saveRamHandlers, 0, _state.Sa1BwBank * 2);
-
-		cpuMappings->RegisterHandler(i, i, 0x6000, 0x7FFF, saveRamHandlers, 0, _state.CpuBwBank * 2);
-		cpuMappings->RegisterHandler(i + 0x80, i + 0x80, 0x6000, 0x7FFF, saveRamHandlers, 0, _state.CpuBwBank * 2);
+	uint32_t bankNumber = _state.CpuBwBank & ((_cpuBwRamHandlers.size() / 2) - 1);
+	for(int i = 0; i <= 0x3F; i++) {
+		//S-CPU: 00-3F:6000-7FFF + 80-BF:6000-7FFF
+		cpuMappings->RegisterHandler(i, i, 0x6000, 0x6FFF, saveRamHandlers[bankNumber * 2].get());
+		cpuMappings->RegisterHandler(i, i, 0x7000, 0x7FFF, saveRamHandlers[bankNumber * 2 + 1].get());
+		cpuMappings->RegisterHandler(i + 0x80, i + 0x80, 0x6000, 0x6FFF, saveRamHandlers[bankNumber * 2].get());
+		cpuMappings->RegisterHandler(i + 0x80, i + 0x80, 0x7000, 0x7FFF, saveRamHandlers[bankNumber * 2 + 1].get());
 	}
 }
 
@@ -740,6 +752,12 @@ void Sa1::Reset()
 SnesMemoryType Sa1::GetSa1MemoryType()
 {
 	return _lastAccessMemType;
+}
+
+bool Sa1::IsSnesCpuFastRomSpeed()
+{
+	//TODO: Does DMA always count as SlowROM speed regardless of the CPU's speed when DMA began?
+	return _memoryManager->GetCpuSpeed() == 6;
 }
 
 SnesMemoryType Sa1::GetSnesCpuMemoryType()

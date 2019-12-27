@@ -16,7 +16,8 @@ InternalRegisters::InternalRegisters()
 
 void InternalRegisters::Initialize(Console* console)
 {
-	_aluMulDiv.Initialize(console->GetCpu().get());
+	_cpu = console->GetCpu().get();
+	_aluMulDiv.Initialize(_cpu);
 	_console = console;
 	_memoryManager = console->GetMemoryManager().get();
 	_ppu = _console->GetPpu().get();
@@ -38,6 +39,7 @@ void InternalRegisters::Reset()
 	_nmiFlag = false;
 	_irqLevel = false;
 	_needIrq = false;
+	_irqFlag = false;
 }
 
 void InternalRegisters::ProcessAutoJoypadRead()
@@ -79,13 +81,24 @@ uint8_t InternalRegisters::GetIoPortOutput()
 void InternalRegisters::SetNmiFlag(bool nmiFlag)
 {
 	_nmiFlag = nmiFlag;
+	_cpu->SetNmiFlag(_state.EnableNmi && _nmiFlag);
+}
+
+void InternalRegisters::SetIrqFlag(bool irqFlag)
+{
+	_irqFlag = irqFlag && (_state.EnableHorizontalIrq || _state.EnableVerticalIrq);
+	if(_irqFlag) {
+		_cpu->SetIrqSource(IrqSource::Ppu);
+	} else {
+		_cpu->ClearIrqSource(IrqSource::Ppu);
+	}
 }
 
 uint8_t InternalRegisters::Peek(uint16_t addr)
 {
 	switch(addr) {
 		case 0x4210: return (_nmiFlag ? 0x80 : 0) | 0x02;
-		case 0x4211: return (_console->GetCpu()->CheckIrqSource(IrqSource::Ppu) ? 0x80 : 0);
+		case 0x4211: return (_irqFlag ? 0x80 : 0);
 		default: return Read(addr);
 	}
 }
@@ -98,13 +111,13 @@ uint8_t InternalRegisters::Read(uint16_t addr)
 				(_nmiFlag ? 0x80 : 0) |
 				0x02; //CPU revision
 
-			_nmiFlag = false;
+			SetNmiFlag(false);
 			return value | (_memoryManager->GetOpenBus() & 0x70);
 		}
 
 		case 0x4211: {
-			uint8_t value = (_console->GetCpu()->CheckIrqSource(IrqSource::Ppu) ? 0x80 : 0);
-			_console->GetCpu()->ClearIrqSource(IrqSource::Ppu);
+			uint8_t value = (_irqFlag ? 0x80 : 0);
+			SetIrqFlag(false);
 			return value | (_memoryManager->GetOpenBus() & 0x7F);
 		}
 
@@ -150,25 +163,13 @@ void InternalRegisters::Write(uint16_t addr, uint8_t value)
 {
 	switch(addr) {
 		case 0x4200:
-			if((value & 0x30) == 0x20 && !_state.EnableVerticalIrq && _ppu->GetRealScanline() == _state.VerticalTimer) {
-				//When enabling vertical irqs, if the current scanline matches the target scanline, set the irq flag right away
-				_console->GetCpu()->SetIrqSource(IrqSource::Ppu);
-			}
-
-			if((value & 0x80) && !_state.EnableNmi && _nmiFlag) {
-				_console->GetCpu()->SetNmiFlag();
-			}
-
 			_state.EnableNmi = (value & 0x80) != 0;
 			_state.EnableVerticalIrq = (value & 0x20) != 0;
 			_state.EnableHorizontalIrq = (value & 0x10) != 0;
-
-			if(!_state.EnableHorizontalIrq && !_state.EnableVerticalIrq) {
-				//TODO VERIFY
-				_console->GetCpu()->ClearIrqSource(IrqSource::Ppu);
-			}
-			
 			_state.EnableAutoJoypadRead = (value & 0x01) != 0;
+			
+			SetNmiFlag(_nmiFlag);
+			SetIrqFlag(_irqFlag);
 			break;
 
 		case 0x4201:
@@ -187,11 +188,29 @@ void InternalRegisters::Write(uint16_t addr, uint8_t value)
 			_aluMulDiv.Write(addr, value);
 			break;
 
-		case 0x4207: _state.HorizontalTimer = (_state.HorizontalTimer & 0x100) | value; break;
-		case 0x4208: _state.HorizontalTimer = (_state.HorizontalTimer & 0xFF) | ((value & 0x01) << 8); break;
+		case 0x4207: 
+			_state.HorizontalTimer = (_state.HorizontalTimer & 0x100) | value; 
+			ProcessIrqCounters();
+			break;
 
-		case 0x4209: _state.VerticalTimer = (_state.VerticalTimer & 0x100) | value; break;
-		case 0x420A: _state.VerticalTimer = (_state.VerticalTimer & 0xFF) | ((value & 0x01) << 8); break;
+		case 0x4208: 
+			_state.HorizontalTimer = (_state.HorizontalTimer & 0xFF) | ((value & 0x01) << 8); 
+			ProcessIrqCounters();
+			break;
+
+		case 0x4209: 
+			_state.VerticalTimer = (_state.VerticalTimer & 0x100) | value; 
+
+			//Calling this here fixes flashing issue in "Shin Nihon Pro Wrestling Kounin - '95 Tokyo Dome Battle 7"
+			//The write to change from scanline 16 to 17 occurs between both ProcessIrqCounter calls, which causes the IRQ
+			//line to always be high (since the previous check is on scanline 16, and the next check on scanline 17)
+			ProcessIrqCounters();
+			break;
+
+		case 0x420A: 
+			_state.VerticalTimer = (_state.VerticalTimer & 0xFF) | ((value & 0x01) << 8);
+			ProcessIrqCounters();
+			break;
 
 		case 0x420D: _state.EnableFastRom = (value & 0x01) != 0; break;
 
@@ -216,7 +235,7 @@ void InternalRegisters::Serialize(Serializer &s)
 	s.Stream(
 		_state.EnableFastRom, _nmiFlag, _state.EnableNmi, _state.EnableHorizontalIrq, _state.EnableVerticalIrq, _state.HorizontalTimer,
 		_state.VerticalTimer, _state.IoPortOutput, _state.ControllerData[0], _state.ControllerData[1], _state.ControllerData[2], _state.ControllerData[3],
-		_irqLevel, _needIrq, _state.EnableAutoJoypadRead
+		_irqLevel, _needIrq, _state.EnableAutoJoypadRead, _irqFlag
 	);
 
 	s.Stream(&_aluMulDiv);

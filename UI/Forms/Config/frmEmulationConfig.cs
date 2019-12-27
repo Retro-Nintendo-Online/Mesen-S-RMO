@@ -26,8 +26,11 @@ namespace Mesen.GUI.Forms.Config
 			AddBinding(nameof(EmulationConfig.TurboSpeed), nudTurboSpeed);
 			AddBinding(nameof(EmulationConfig.RewindSpeed), nudRewindSpeed);
 			AddBinding(nameof(EmulationConfig.Region), cboRegion);
+			AddBinding(nameof(EmulationConfig.RunAheadFrames), nudRunAheadFrames);
 
 			AddBinding(nameof(EmulationConfig.RamPowerOnState), cboRamPowerOnState);
+			AddBinding(nameof(EmulationConfig.EnableRandomPowerOnState), chkEnableRandomPowerOnState);
+			AddBinding(nameof(EmulationConfig.EnableStrictBoardMappings), chkEnableStrictBoardMappings);
 
 			AddBinding(nameof(EmulationConfig.PpuExtraScanlinesBeforeNmi), nudExtraScanlinesBeforeNmi);
 			AddBinding(nameof(EmulationConfig.PpuExtraScanlinesAfterNmi), nudExtraScanlinesAfterNmi);

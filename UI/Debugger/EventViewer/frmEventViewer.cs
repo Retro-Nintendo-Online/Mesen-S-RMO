@@ -44,10 +44,16 @@ namespace Mesen.GUI.Debugger
 				_refreshManager = new WindowRefreshManager(this);
 				_refreshManager.AutoRefresh = config.AutoRefresh;
 				_refreshManager.AutoRefreshSpeed = config.AutoRefreshSpeed;
+				mnuAutoRefresh.Checked = config.AutoRefresh;
 				mnuAutoRefreshLow.Click += (s, evt) => _refreshManager.AutoRefreshSpeed = RefreshSpeed.Low;
 				mnuAutoRefreshNormal.Click += (s, evt) => _refreshManager.AutoRefreshSpeed = RefreshSpeed.Normal;
 				mnuAutoRefreshHigh.Click += (s, evt) => _refreshManager.AutoRefreshSpeed = RefreshSpeed.High;
 				mnuAutoRefreshSpeed.DropDownOpening += (s, evt) => UpdateRefreshSpeedMenu();
+
+				ctrlFilters.Init();
+
+				RefreshData();
+				RefreshViewer();
 			}
 		}
 
@@ -68,6 +74,7 @@ namespace Mesen.GUI.Debugger
 
 		private void InitShortcuts()
 		{
+			mnuRefresh.InitShortcut(this, nameof(DebuggerShortcutsConfig.Refresh));
 			mnuZoomIn.InitShortcut(this, nameof(DebuggerShortcutsConfig.ZoomIn));
 			mnuZoomOut.InitShortcut(this, nameof(DebuggerShortcutsConfig.ZoomOut));
 
@@ -78,12 +85,17 @@ namespace Mesen.GUI.Debugger
 
 		public void RefreshData()
 		{
-			ctrlPpuView.RefreshData();
+			EventViewerDisplayOptions options = ConfigManager.Config.Debug.EventViewer.GetInteropOptions();
+			ctrlPpuView.ScanlineCount = DebugApi.TakeEventSnapshot(options);
 		}
 
 		public void RefreshViewer()
 		{
-			ctrlPpuView.RefreshViewer();
+			if(tabMain.SelectedTab == tpgPpuView) {
+				ctrlPpuView.RefreshViewer();
+			} else {
+				ctrlListView.RefreshViewer();
+			}
 		}
 
 		private void OnNotificationReceived(NotificationEventArgs e)
@@ -91,9 +103,9 @@ namespace Mesen.GUI.Debugger
 			switch(e.NotificationType) {
 				case ConsoleNotificationType.CodeBreak:
 					if(ConfigManager.Config.Debug.EventViewer.RefreshOnBreakPause) {
-						ctrlPpuView.RefreshData();
+						RefreshData();
 						this.BeginInvoke((Action)(() => {
-							ctrlPpuView.RefreshViewer();
+							RefreshViewer();
 						}));
 					}
 					break;
@@ -111,12 +123,27 @@ namespace Mesen.GUI.Debugger
 			RefreshData();
 			RefreshViewer();
 		}
+		
+		private void mnuAutoRefresh_CheckedChanged(object sender, EventArgs e)
+		{
+			_refreshManager.AutoRefresh = mnuAutoRefresh.Checked;
+		}
 
 		private void UpdateRefreshSpeedMenu()
 		{
 			mnuAutoRefreshLow.Checked = _refreshManager.AutoRefreshSpeed == RefreshSpeed.Low;
 			mnuAutoRefreshNormal.Checked = _refreshManager.AutoRefreshSpeed == RefreshSpeed.Normal;
 			mnuAutoRefreshHigh.Checked = _refreshManager.AutoRefreshSpeed == RefreshSpeed.High;
+		}
+
+		private void ctrlFilters_OptionsChanged(object sender, EventArgs e)
+		{
+			RefreshViewer();
+		}
+
+		private void tabMain_SelectedIndexChanged(object sender, EventArgs e)
+		{
+			RefreshViewer();
 		}
 	}
 }

@@ -25,6 +25,7 @@ private:
 	
 	vector<DebugEventInfo> _snapshot;
 	uint16_t _snapshotScanline;
+	uint16_t _snapshotCycle;
 	SimpleLock _lock;
 
 	bool _overscanMode = false;
@@ -33,6 +34,7 @@ private:
 	uint16_t *_ppuBuffer;
 
 	void DrawEvent(DebugEventInfo &evt, bool drawBackground, uint32_t *buffer, EventViewerDisplayOptions &options);
+	void FilterEvents(EventViewerDisplayOptions &options);
 
 public:
 	EventManager(Debugger *debugger, Cpu *cpu, Ppu *ppu, DmaController *dmaController);
@@ -41,8 +43,8 @@ public:
 	void AddEvent(DebugEventType type, MemoryOperationInfo &operation, int32_t breakpointId = -1);
 	void AddEvent(DebugEventType type);
 	
-	void GetEvents(DebugEventInfo *eventArray, uint32_t &maxEventCount, bool getPreviousFrameData);
-	uint32_t GetEventCount(bool getPreviousFrameData);
+	void GetEvents(DebugEventInfo *eventArray, uint32_t &maxEventCount);
+	uint32_t GetEventCount(EventViewerDisplayOptions options);
 	void ClearFrameEvents();
 
 	uint32_t TakeEventSnapshot(EventViewerDisplayOptions options);
@@ -66,7 +68,7 @@ struct DebugEventInfo
 	uint16_t Scanline;
 	uint16_t Cycle;
 	int16_t BreakpointId;
-	uint8_t DmaChannel;
+	int8_t DmaChannel;
 	DmaChannelConfig DmaChannelInfo;
 };
 
@@ -75,8 +77,17 @@ struct EventViewerDisplayOptions
 	uint32_t IrqColor;
 	uint32_t NmiColor;
 	uint32_t BreakpointColor;
+	
 	uint32_t PpuRegisterReadColor;
-	uint32_t PpuRegisterWriteColor;
+	uint32_t PpuRegisterWriteCgramColor;
+	uint32_t PpuRegisterWriteVramColor;
+	uint32_t PpuRegisterWriteOamColor;
+	uint32_t PpuRegisterWriteMode7Color;
+	uint32_t PpuRegisterWriteBgOptionColor;
+	uint32_t PpuRegisterWriteBgScrollColor;
+	uint32_t PpuRegisterWriteWindowColor;
+	uint32_t PpuRegisterWriteOtherColor;
+
 	uint32_t ApuRegisterReadColor;
 	uint32_t ApuRegisterWriteColor;
 	uint32_t CpuRegisterReadColor;
@@ -84,7 +95,15 @@ struct EventViewerDisplayOptions
 	uint32_t WorkRamRegisterReadColor;
 	uint32_t WorkRamRegisterWriteColor;
 
-	bool ShowPpuRegisterWrites;
+	bool ShowPpuRegisterCgramWrites;
+	bool ShowPpuRegisterVramWrites;
+	bool ShowPpuRegisterOamWrites;
+	bool ShowPpuRegisterMode7Writes;
+	bool ShowPpuRegisterBgOptionWrites;
+	bool ShowPpuRegisterBgScrollWrites;
+	bool ShowPpuRegisterWindowWrites;
+	bool ShowPpuRegisterOtherWrites;
+
 	bool ShowPpuRegisterReads;
 	bool ShowCpuRegisterWrites;
 	bool ShowCpuRegisterReads;

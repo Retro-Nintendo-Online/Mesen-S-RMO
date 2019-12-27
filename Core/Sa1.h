@@ -11,7 +11,6 @@ class MemoryManager;
 class BaseCartridge;
 
 //TODO: Implement write protection flags
-//TODO: Bitmap projection at $6000
 //TODO: Timers
 
 class Sa1 : public BaseCoprocessor
@@ -32,6 +31,7 @@ private:
 	uint8_t _openBus;
 
 	unique_ptr<IMemoryHandler> _iRamHandler;
+	unique_ptr<IMemoryHandler> _bwRamHandler;
 	unique_ptr<IMemoryHandler> _sa1VectorHandler;
 	unique_ptr<IMemoryHandler> _cpuVectorHandler;
 	
@@ -74,7 +74,7 @@ public:
 	void Serialize(Serializer & s) override;
 	uint8_t Read(uint32_t addr) override;
 	uint8_t Peek(uint32_t addr) override;
-	void PeekBlock(uint8_t * output) override;
+	void PeekBlock(uint32_t addr, uint8_t *output) override;
 	void Write(uint32_t addr, uint8_t value) override;
 	AddressInfo GetAbsoluteAddress(uint32_t address) override;
 	
@@ -82,6 +82,7 @@ public:
 	void Reset() override;
 
 	SnesMemoryType GetSa1MemoryType();
+	bool IsSnesCpuFastRomSpeed();
 	SnesMemoryType GetSnesCpuMemoryType();
 
 	uint8_t* DebugGetInternalRam();

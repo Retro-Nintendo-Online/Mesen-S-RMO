@@ -44,23 +44,26 @@ namespace Mesen.GUI.Controls
 				lblGameName.Text = Path.GetFileNameWithoutExtension(_recentGame.RomName);
 				lblSaveDate.Text = _recentGame.Timestamp.ToString();
 
-				try {
-					ZipArchive zip = new ZipArchive(new MemoryStream(File.ReadAllBytes(_recentGame.FileName)));
-					ZipArchiveEntry entry = zip.GetEntry("Screenshot.png");
-					if(entry != null) {
-						using(Stream stream = entry.Open()) {
-							picPreviousState.Image = Image.FromStream(stream);
-						}
-					} else {
-						picPreviousState.Image = null;
-					}
-				} catch {
-					picPreviousState.Image = null;
-				}
-
 				lblGameName.Visible = true;
 				lblSaveDate.Visible = true;
 				picPreviousState.Visible = true;
+
+				Task.Run(() => {
+					Image img = null;
+					try {
+						ZipArchive zip = new ZipArchive(new MemoryStream(File.ReadAllBytes(_recentGame.FileName)));
+						ZipArchiveEntry entry = zip.GetEntry("Screenshot.png");
+						if(entry != null) {
+							using(Stream stream = entry.Open()) {
+								img = Image.FromStream(stream);
+							}
+						}
+					} catch { }
+
+					this.BeginInvoke((Action)(() => {
+						picPreviousState.Image = img;
+					}));
+				});
 			}
 		}
 
